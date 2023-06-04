@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torchvision import datasets, transforms
-
+import matplotlib.pyplot as plt
 
 def GetCorrectPredCount(pPrediction, pLabels):
   return pPrediction.argmax(dim=1).eq(pLabels).sum().item()
@@ -41,13 +41,13 @@ def train(model, device, train_loader, optimizer, criterion):
 
     pbar.set_description(desc= f'Train: Loss={loss.item():0.4f} Batch_id={batch_idx} Accuracy={100*correct/processed:0.2f}')
 
-  train_acc.append(100*correct/processed)
-  train_losses.append(train_loss/len(train_loader))
+  train_acc = 100*correct/processed
+  train_losses = train_loss/len(train_loader)
+  
+  return train_acc,train_losses
 
 def test(model, device, test_loader, criterion):
   model.eval()
-  test_losses = []
-  test_acc = []
 
   test_loss = 0
   correct = 0
@@ -57,16 +57,29 @@ def test(model, device, test_loader, criterion):
       data, target = data.to(device), target.to(device)
 
       output = model(data)
-      test_loss += criterion(output, target, reduction='sum').item()  # sum up batch loss
+      test_loss += criterion(output, target).item()  # sum up batch loss
 
       correct += GetCorrectPredCount(output, target)
 
-
   test_loss /= len(test_loader.dataset)
-  test_acc.append(100. * correct / len(test_loader.dataset))
-  test_losses.append(test_loss)
+  test_acc = 100. * correct / len(test_loader.dataset)
+  test_losses = test_loss
 
   print('Test set: Average loss: {:.4f}, Accuracy: {}/{} ({:.2f}%)\n'.format(
     test_loss, correct, len(test_loader.dataset),
     100. * correct / len(test_loader.dataset)))
+
+  return test_acc, test_losses 
+
+def plot_acc_loss(train_acc,train_losses,test_acc,test_losses):
+  fig, axs = plt.subplots(2,2,figsize=(15,10))
+  axs[0, 0].plot(train_losses)
+  axs[0, 0].set_title("Training Loss")
+  axs[1, 0].plot(train_acc)
+  axs[1, 0].set_title("Training Accuracy")
+  axs[0, 1].plot(test_losses)
+  axs[0, 1].set_title("Test Loss")
+  axs[1, 1].plot(test_acc)
+  axs[1, 1].set_title("Test Accuracy")
+
     
